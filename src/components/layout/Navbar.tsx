@@ -30,56 +30,12 @@ export default function Navbar() {
         const fetchCategories = async () => {
             try {
                 const data = await adminService.getStructuredCategories();
-                // Add fallbacks for core categories if missing from DB to ensure hover works
-                const coreSlugs = ['women', 'men', 'fragrance'];
-                const existingSlugs = data.map((c: any) => c.slug);
-
-                const finalData = [...data];
-
-                // Inject mock structure if missing to satisfy the 'restore' requirement immediately
-                if (!existingSlugs.includes('women')) {
-                    finalData.push({
-                        id: 'women-fallback',
-                        name: 'Women',
-                        slug: 'women',
-                        show_in_main_nav: true,
-                        subcategories: [
-                            { id: 'w1', name: 'Bridal Hijabs', slug: 'bridal-hijabs' },
-                            { id: 'w2', name: 'Chiffon Collection', slug: 'chiffon-hijabs' },
-                            { id: 'w3', name: 'Silk Essentials', slug: 'silk-hijabs' }
-                        ]
-                    });
-                }
-                if (!existingSlugs.includes('men')) {
-                    finalData.push({
-                        id: 'men-fallback',
-                        name: 'Men',
-                        slug: 'men',
-                        show_in_main_nav: true,
-                        subcategories: [
-                            { id: 'm1', name: 'Luxury Thobes', slug: 'luxury-thobes' },
-                            { id: 'm2', name: 'Casual Tunics', slug: 'casual-tunics' }
-                        ]
-                    });
-                }
-                if (!existingSlugs.includes('fragrance')) {
-                    finalData.push({
-                        id: 'frag-fallback',
-                        name: 'Fragrance',
-                        slug: 'fragrance',
-                        show_in_main_nav: true,
-                        subcategories: [
-                            { id: 'f1', name: 'Oud & Musk', slug: 'oud-musk' },
-                            { id: 'f2', name: 'Floral Oils', slug: 'floral-oils' }
-                        ]
-                    });
-                }
 
                 // Map Supabase fields to the Category type expected by components
-                const mappedCategories = finalData.map((cat: any) => ({
+                const mappedCategories = data.map((cat: any) => ({
                     ...cat,
                     displaySettings: {
-                        showInMainNav: cat.show_in_main_nav,
+                        showInMainNav: cat.show_in_main_nav ?? true,
                         showInMegaMenu: true,
                         showInMobile: true,
                         featuredImage: cat.display_settings?.featuredImage || cat.image_url
@@ -87,7 +43,7 @@ export default function Navbar() {
                     subcategories: (cat.subcategories || []).map((sub: any) => ({
                         ...sub,
                         displaySettings: {
-                            showInMainNav: sub.show_in_main_nav,
+                            showInMainNav: sub.show_in_main_nav ?? true,
                             showInMegaMenu: true,
                             showInMobile: true,
                             featuredImage: sub.display_settings?.featuredImage || sub.image_url

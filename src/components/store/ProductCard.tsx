@@ -67,23 +67,27 @@ export default function ProductCard({ product, priority = false, index = 0 }: Pr
                 </div>
 
                 {/* Side Actions */}
-                <div className={`absolute top-4 right-4 flex flex-col gap-2 transition-all duration-300 z-10 ${isHovered ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0'}`}>
-                    <button className="w-10 h-10 bg-white rounded-none flex items-center justify-center text-[#1a1a1a] hover:bg-[#c9a961] hover:text-white transition-colors shadow-sm" title="Add to Wishlist">
-                        <Heart size={18} />
+                <div className={`absolute top-4 right-4 flex flex-col gap-2 transition-all duration-300 z-10 
+                    lg:opacity-0 lg:translate-x-2 lg:group-hover:opacity-100 lg:group-hover:translate-x-0
+                    opacity-100 translate-x-0`}>
+                    <button className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-none flex items-center justify-center text-[#1a1a1a] hover:bg-[#c9a961] hover:text-white transition-colors shadow-sm" title="Add to Wishlist">
+                        <Heart size={16} />
                     </button>
                     <button
-                        className="w-10 h-10 bg-white rounded-none flex items-center justify-center text-[#1a1a1a] hover:bg-[#c9a961] hover:text-white transition-colors shadow-sm"
+                        className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-none flex items-center justify-center text-[#1a1a1a] hover:bg-[#c9a961] hover:text-white transition-colors shadow-sm"
                         title="Quick View"
                         onClick={() => openQuickView(product)}
                     >
-                        <Eye size={18} />
+                        <Eye size={16} />
                     </button>
                 </div>
 
                 {/* Quick Add Button */}
                 <button
                     onClick={() => openQuickView(product)}
-                    className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] bg-white py-3 text-xs font-bold uppercase tracking-widest text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-all duration-300 shadow-md ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                    className={`absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] bg-white py-3 text-[10px] md:text-xs font-bold uppercase tracking-widest text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-all duration-300 shadow-md
+                        lg:opacity-0 lg:translate-y-4 lg:group-hover:opacity-100 lg:group-hover:translate-y-0
+                        opacity-100 translate-y-0`}
                 >
                     Quick Add
                 </button>

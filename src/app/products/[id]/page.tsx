@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
@@ -8,28 +8,14 @@ import { useCart } from "@/context/CartContext";
 import ProductCard from "@/components/products/ProductCard";
 import { Product } from "@/types";
 import { motion } from "framer-motion";
+import { adminService } from "@/lib/admin";
+import { Loader2 } from "lucide-react";
 
 // Modular Components
 import ProductGallery from "@/components/products/ProductGallery";
 import ProductInfo from "@/components/products/ProductInfo";
 import ProductSelectors from "@/components/products/ProductSelectors";
 import ProductTabs from "@/components/products/ProductTabs";
-
-const allProducts: Product[] = [
-    {
-        id: "1",
-        name: "Classic Silk Hijab",
-        price: 35.00,
-        originalPrice: 45.00,
-        category: "Premium Hijabs",
-        image: "/images/silk-hijab.png",
-        description: "Our Classic Silk Hijab is crafted from the finest mulberry silk, offering a luxurious sheen and a drape that is both graceful and effortless. Perfect for special occasions or adding a touch of elegance to your daily attire.",
-        isNew: true,
-        onSale: true,
-        colors: ["Cream", "Midnight Blue", "Dusty Rose"],
-        sizes: ["Standard", "Large"]
-    },
-];
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -53,28 +39,67 @@ const itemVariants = {
 
 export default function ProductDetailPage() {
     const params = useParams();
+    const id = params?.id as string;
     const { addItem, updateQuantity } = useCart();
     const [quantity, setQuantity] = useState(1);
+    const [product, setProduct] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Default product handling
-    const product = allProducts.find(p => p.id === params.id) || allProducts[0];
+    useEffect(() => {
+        if (id) {
+            loadProduct(id);
+        }
+    }, [id]);
 
-    const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || "Cream");
-    const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || "Standard");
+    const loadProduct = async (productId: string) => {
+        try {
+            setIsLoading(true);
+            const data = await adminService.getProductById(productId);
+            // Map DB structure to what components expect
+            const mappedProduct = {
+                ...data,
+                price: data.base_price,
+                category: data.category?.name || "Premium Collection",
+                image: data.images?.find((img: any) => img.is_primary)?.url || data.images?.[0]?.url || "/images/silk-hijab.png",
+                images: data.images?.map((img: any) => img.url) || []
+            };
+            setProduct(mappedProduct);
+        } catch (error) {
+            console.error("Failed to load product", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const [selectedColor, setSelectedColor] = useState("Cream");
+    const [selectedSize, setSelectedSize] = useState("Standard");
 
     const handleAddToCart = () => {
+        if (!product) return;
         addItem(product);
         if (quantity > 1) {
             updateQuantity(product.id, quantity);
         }
     };
 
-    const galleryImages = [
-        product.image,
-        "/images/collection.png",
-        product.image,
-        "/images/collection.png"
-    ];
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-neutral-cream pt-24 flex items-center justify-center">
+                <Loader2 className="animate-spin text-primary-gold" size={40} />
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div className="min-h-screen bg-neutral-cream pt-24 text-center">
+                <h1 className="text-2xl font-display">Product not found</h1>
+                <Link href="/products" className="text-primary-gold hover:underline">Return to Store</Link>
+            </div>
+        );
+    }
+
+    const galleryImages = product.images.length > 0 ? product.images : [product.image];
 
     return (
         <div className="min-h-screen bg-neutral-cream font-body pt-24 text-primary-dark">
@@ -121,21 +146,7 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
 
-                {/* Suggestions Section */}
-                <motion.section variants={itemVariants} className="mt-40 border-t border-neutral-sand pt-24">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
-                        <div className="space-y-2">
-                            <span className="text-primary-gold uppercase tracking-[0.2em] text-xs font-bold">You Might Also Love</span>
-                            <h2 className="font-display text-5xl text-primary-dark">Complete the Ensemble</h2>
-                        </div>
-                        <Link href="/products" className="text-xs font-bold uppercase tracking-widest text-neutral-gray hover:text-primary-gold border-b border-primary-gold/30 pb-1">Explore All</Link>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-                        {allProducts.slice(0, 4).map(p => (
-                            <ProductCard key={p.id} product={p} />
-                        ))}
-                    </div>
-                </motion.section>
+                {/* Suggestions Section - Potentially load related products here later */}
             </motion.main>
 
             <Footer />

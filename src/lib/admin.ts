@@ -110,16 +110,64 @@ export const adminService = {
         return data;
     },
 
-    async updateProduct(id: string, updates: any) {
+    async updateProduct(id: string, updates: any, variants: any[] = [], images: string[] = []) {
+        // 1. Update product basic info
         const { data, error } = await supabase
             .from('products')
-            .update(updates)
+            .update({
+                name: updates.name,
+                slug: updates.slug,
+                description: updates.description,
+                category_id: updates.category_id,
+                base_price: updates.base_price,
+                is_active: updates.is_active,
+                sku_base: updates.sku_base,
+                is_featured: updates.is_featured,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', id)
             .select()
             .single();
 
         if (error) throw error;
+
+        // 2. Handle variants (Simple version: delete and re-insert)
+        if (variants.length > 0) {
+            await supabase.from('product_variants').delete().eq('product_id', id);
+            const variantData = variants.map(v => ({
+                product_id: id,
+                sku: v.sku,
+                name: v.name,
+                price_override: v.price_override,
+                stock_quantity: v.stock_quantity,
+                attributes: v.attributes
+            }));
+            const { error: vError } = await supabase.from('product_variants').insert(variantData);
+            if (vError) throw vError;
+        }
+
+        // 3. Handle images (Simple version: delete and re-insert)
+        if (images.length > 0) {
+            await supabase.from('product_images').delete().eq('product_id', id);
+            const imageData = images.map((url, i) => ({
+                product_id: id,
+                url: url,
+                is_primary: i === 0,
+                display_order: i
+            }));
+            const { error: iError } = await supabase.from('product_images').insert(imageData);
+            if (iError) throw iError;
+        }
+
         return data;
+    },
+
+    async deleteProduct(id: string) {
+        const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
     },
 
     // Orders

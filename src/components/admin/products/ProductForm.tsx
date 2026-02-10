@@ -94,10 +94,8 @@ export default function ProductForm({ initialData, isEditMode = false }: Product
                 base_price: parseFloat(formData.base_price),
             };
 
-            if (isEditMode) {
-                // Update logic here (service doesn't have updateProduct yet in the snippet provided, assuming create for now or I'd need to add it)
-                // For now, I'll log it.
-                console.log("Update product", productData);
+            if (isEditMode && initialData?.id) {
+                await adminService.updateProduct(initialData.id, productData, variants, images);
             } else {
                 await adminService.createProduct(productData, variants, images);
             }

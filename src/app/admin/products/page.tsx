@@ -126,6 +126,17 @@ export default function ProductsPage() {
                             ) : (
                                 filteredProducts.map((product) => {
                                     const stock = getStock(product);
+                                    const handleDelete = async (id: string) => {
+                                        if (!confirm("Are you sure you want to delete this product?")) return;
+                                        try {
+                                            await adminService.deleteProduct(id);
+                                            setProducts(products.filter(p => p.id !== id));
+                                        } catch (error) {
+                                            console.error("Failed to delete product:", error);
+                                            alert("Failed to delete product.");
+                                        }
+                                    };
+
                                     return (
                                         <tr key={product.id} className="hover:bg-admin-gray-50 transition-colors group">
                                             <td className="px-6 py-4">
@@ -166,7 +177,11 @@ export default function ProductsPage() {
                                                             <Edit size={16} />
                                                         </button>
                                                     </Link>
-                                                    <button className="p-2 text-admin-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                                    <button
+                                                        onClick={() => handleDelete(product.id)}
+                                                        className="p-2 text-admin-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete"
+                                                    >
                                                         <Trash2 size={16} />
                                                     </button>
                                                 </div>
