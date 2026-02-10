@@ -1,0 +1,361 @@
+@import "tailwindcss";
+
+/* 
+  Allows use of standard CSS variables while maintaining Tailwind v4 theme capabilities.
+  These map to the theme variables defined below.
+*/
+:root {
+  /* Colors */
+  --primary-dark: #1a1a1a;
+  --primary-gold: #c9a961;
+  --accent-emerald: #2d5f4f;
+  --accent-terracotta: #c77d5b;
+  --neutral-cream: #f8f6f3;
+  --neutral-sand: #e8e3dc;
+  --neutral-gray: #6b6b6b;
+  --white: #ffffff;
+
+  /* Typography */
+  --font-display: var(--font-playfair);
+  --font-body: var(--font-outfit);
+  --font-accent: var(--font-cormorant);
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  /* Layout */
+  --container-width: 1400px;
+  --grid-gap: 2rem;
+
+  /* Transitions */
+  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s ease;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* Admin Colors */
+  --admin-dark: #0f1419;
+  --admin-darker: #000000;
+  --admin-gold: #c9a961;
+  --admin-emerald: #2d5f4f;
+  --admin-terracotta: #c77d5b;
+  --admin-bg: #f5f7fa;
+  --admin-white: #ffffff;
+  --admin-gray-100: #f8f9fa;
+  --admin-gray-200: #e9ecef;
+  --admin-gray-600: #6c757d;
+  --admin-gray-900: #212529;
+
+  /* Admin Status */
+  --status-success: #28a745;
+  --status-warning: #ffc107;
+  --status-danger: #dc3545;
+  --status-info: #17a2b8;
+
+  /* Admin Typography */
+  --font-admin-body: var(--font-inter);
+  --font-admin-mono: var(--font-jetbrains-mono);
+}
+
+@theme {
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-gold: var(--primary-gold);
+  --color-accent-emerald: var(--accent-emerald);
+  --color-accent-terracotta: var(--accent-terracotta);
+  --color-neutral-cream: var(--neutral-cream);
+  --color-neutral-sand: var(--neutral-sand);
+  --color-neutral-gray: var(--neutral-gray);
+  --color-white: var(--white);
+
+  /* Admin Theme Extensions */
+  --color-admin-dark: var(--admin-dark);
+  --color-admin-darker: var(--admin-darker);
+  --color-admin-gold: var(--admin-gold);
+  --color-admin-emerald: var(--admin-emerald);
+  --color-admin-terracotta: var(--admin-terracotta);
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-white: var(--admin-white);
+  --color-admin-gray-100: var(--admin-gray-100);
+  --color-admin-gray-200: var(--admin-gray-200);
+  --color-admin-gray-600: var(--admin-gray-600);
+  --color-admin-gray-900: var(--admin-gray-900);
+
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-danger: var(--status-danger);
+  --color-status-info: var(--status-info);
+
+  --font-display: var(--font-playfair);
+  --font-body: var(--font-outfit);
+  --font-accent: var(--font-cormorant);
+
+  --font-admin-body: var(--font-admin-body);
+  --font-admin-mono: var(--font-admin-mono);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+body {
+  background-color: var(--color-neutral-cream);
+  /* Tailwind v4 var */
+  color: var(--color-primary-dark);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Hierarchy */
+.heading-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.heading-lg {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.heading-md {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.body-lg {
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+.body-sm {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 1rem 2.5rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--primary-dark);
+  color: var(--white);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--primary-gold);
+  transform: translateX(-100%);
+  transition: transform 0.4s ease;
+  z-index: 1;
+}
+
+.btn-primary span,
+.btn-primary div {
+  position: relative;
+  z-index: 2;
+}
+
+.btn-primary:hover::before {
+  transform: translateX(0);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--primary-dark);
+  border: 1px solid var(--primary-dark);
+}
+
+.btn-secondary:hover {
+  background: var(--primary-dark);
+  color: var(--white);
+}
+
+/* Base Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes floatShape {
+
+  0%,
+  100% {
+    transform: translateY(-50%) scale(1);
+  }
+
+  50% {
+    transform: translateY(-45%) scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(8deg);
+  }
+
+  50% {
+    transform: rotate(-8deg);
+  }
+
+  75% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes ken-burns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+
+  50% {
+    transform: scale(1.15) translate(-1%, -1%);
+  }
+
+  100% {
+    transform: scale(1) translate(0, 0);
+  }
+}
+
+/* Utility Animations */
+.animate-on-scroll {
+  opacity: 0;
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.6s ease-out;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: floatShape 20s ease-in-out infinite;
+}
+
+.animate-ken-burns {
+  animation: ken-burns 30s ease-in-out infinite;
+}
+
+/* Stagger Utilities */
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+
+/* Custom Utilities */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e9ecef;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c9a961;
+}
+
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
