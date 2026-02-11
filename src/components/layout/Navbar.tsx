@@ -128,7 +128,7 @@ export default function Navbar() {
                 onMouseLeave={() => setActiveCategory(null)}
             >
                 <div className="container mx-auto px-4 flex justify-between items-center">
-                    <Link href="/" className="font-accent text-3xl font-semibold tracking-wider text-primary-dark cursor-pointer z-50">
+                    <Link href="/" className="font-accent text-2xl xs:text-3xl font-bold tracking-tight xs:tracking-wider text-primary-dark cursor-pointer z-50 whitespace-nowrap">
                         Yasmin <span className="text-primary-gold font-accent">Fashions</span>
                     </Link>
 
@@ -211,17 +211,7 @@ export default function Navbar() {
                     </button>
 
                     {/* Icons */}
-                    <div className="flex items-center gap-4 md:gap-6 text-primary-dark z-50">
-                        {/* Mobile Account Button */}
-                        <button onClick={handleAccountClick} className="lg:hidden hover:text-primary-gold transition-colors relative group">
-                            {isAuthenticated && user ? (
-                                <div className="w-6 h-6 rounded-full bg-primary-gold flex items-center justify-center text-[10px] text-white font-bold border-2 border-transparent group-hover:border-primary-dark transition-all">
-                                    {user.firstName?.[0] || user.email?.[0] || 'U'}
-                                </div>
-                            ) : (
-                                <User className="w-5 h-5" />
-                            )}
-                        </button>
+                    <div className="flex items-center gap-3 md:gap-6 text-primary-dark z-50">
                         {/* Search Bar */}
                         <div className="relative hidden md:flex items-center">
                             <AnimatePresence>

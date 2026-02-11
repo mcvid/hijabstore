@@ -137,12 +137,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = async (email?: string, password?: string, captchaToken?: string): Promise<void> => {
         if (!email || !password) return;
         setIsLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-            options: { captchaToken }
-        });
-        if (error) throw error;
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+                options: { captchaToken }
+            });
+            if (error) throw error;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const signInWithOAuth = async (provider: 'google' | 'apple') => {
@@ -156,40 +160,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signup = async (email: string, password: string, firstName: string, lastName: string, captchaToken?: string) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                captchaToken,
-                data: {
-                    first_name: firstName,
-                    last_name: lastName,
-                    display_name: `${firstName} ${lastName.charAt(0)}.`
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    captchaToken,
+                    data: {
+                        first_name: firstName,
+                        last_name: lastName,
+                        display_name: `${firstName} ${lastName.charAt(0)}.`
+                    }
+                }
+            });
+
+            if (error) throw error;
+
+            // The handle_new_user trigger will create the profile automatically
+            // This is just a fallback in case the trigger fails
+            if (data.user) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .upsert({
+                        id: data.user.id,
+                        email: email,
+                        display_name: `${firstName} ${lastName.charAt(0)}.`,
+                        tier: 'bronze',
+                        points: 0
+                    }, {
+                        onConflict: 'id'
+                    });
+
+                if (profileError) {
+                    console.error("Error creating profile:", profileError);
+                    // Don't throw - the trigger might have already created it
                 }
             }
-        });
-
-        if (error) throw error;
-
-        // The handle_new_user trigger will create the profile automatically
-        // This is just a fallback in case the trigger fails
-        if (data.user) {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: data.user.id,
-                    email: email,
-                    display_name: `${firstName} ${lastName.charAt(0)}.`,
-                    tier: 'bronze',
-                    points: 0
-                }, {
-                    onConflict: 'id'
-                });
-
-            if (profileError) {
-                console.error("Error creating profile:", profileError);
-                // Don't throw - the trigger might have already created it
-            }
+        } finally {
+            setIsLoading(false);
         }
     };
 

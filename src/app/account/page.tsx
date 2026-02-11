@@ -17,6 +17,8 @@ import {
 import ProfileLayout from "@/components/profile/ProfileLayout";
 import { profileService } from "@/lib/profileService";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 
 export default function AccountDashboard() {
     const { user, isLoading: isAuthLoading } = useAuth();
@@ -25,10 +27,13 @@ export default function AccountDashboard() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        if (!isAuthLoading && !user) {
+            redirect("/");
+        }
         if (user) {
             loadDashboardData();
         }
-    }, [user]);
+    }, [user, isAuthLoading]);
 
     const loadDashboardData = async () => {
         try {
@@ -59,11 +64,18 @@ export default function AccountDashboard() {
     if (isAuthLoading || (isLoading && !orders.length)) {
         return (
             <ProfileLayout>
-                <div className="flex items-center justify-center h-96">
+                <div className="flex flex-col items-center justify-center h-96 gap-4">
                     <div className="animate-spin w-8 h-8 border-4 border-primary-gold border-t-transparent rounded-full" />
+                    {!isAuthLoading && !user && (
+                        <p className="text-neutral-gray text-sm animate-pulse">Redirecting to login...</p>
+                    )}
                 </div>
             </ProfileLayout>
         );
+    }
+
+    if (!user && !isAuthLoading) {
+        return null; // Handled by redirect
     }
 
     return (
