@@ -5,8 +5,44 @@ import Footer from "@/components/layout/Footer";
 import Button from "@/components/common/Button";
 import Link from "next/link";
 import { Mail, Lock, User, UserPlus } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { useState } from "react";
 
 export default function RegisterPage() {
+    const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "" });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+    const { signup, signInWithOAuth } = useAuth();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!captchaToken) {
+            setError("Please verify you are human.");
+            return;
+        }
+        setIsLoading(true);
+        try {
+            await signup(formData.email, formData.password, formData.firstName, formData.lastName, captchaToken);
+            alert("Registration successful! Please check your email for a verification link.");
+        } catch (err: any) {
+            setError(err.message || "Failed to create account");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSocialLogin = async (provider: 'google' | 'apple') => {
+        setError(null);
+        try {
+            await signInWithOAuth(provider);
+        } catch (err: any) {
+            setError(err.message || `Failed to sign in with ${provider}`);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-neutral-cream font-body pt-24 text-primary-dark">
             <Navbar />
@@ -19,7 +55,13 @@ export default function RegisterPage() {
                         <p className="text-neutral-gray text-sm font-light">Join Yasmin Fashions for exclusive access to collections and rewards.</p>
                     </div>
 
-                    <form className="space-y-8 text-left">
+                    {error && (
+                        <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs text-center font-medium">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-8 text-left">
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2 group">
@@ -29,6 +71,8 @@ export default function RegisterPage() {
                                         <input
                                             type="text"
                                             placeholder="Aisha"
+                                            value={formData.firstName}
+                                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                                             className="w-full bg-transparent border-b border-neutral-sand py-3 pl-8 text-sm focus:outline-none focus:border-primary-gold transition-all"
                                             required
                                         />
@@ -41,6 +85,8 @@ export default function RegisterPage() {
                                         <input
                                             type="text"
                                             placeholder="Ahmed"
+                                            value={formData.lastName}
+                                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                                             className="w-full bg-transparent border-b border-neutral-sand py-3 pl-8 text-sm focus:outline-none focus:border-primary-gold transition-all"
                                             required
                                         />
@@ -55,6 +101,8 @@ export default function RegisterPage() {
                                     <input
                                         type="email"
                                         placeholder="your@email.com"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         className="w-full bg-transparent border-b border-neutral-sand py-3 pl-8 text-sm focus:outline-none focus:border-primary-gold transition-all"
                                         required
                                     />
@@ -68,11 +116,21 @@ export default function RegisterPage() {
                                     <input
                                         type="password"
                                         placeholder="••••••••"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         className="w-full bg-transparent border-b border-neutral-sand py-3 pl-8 text-sm focus:outline-none focus:border-primary-gold transition-all"
                                         required
                                     />
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="flex justify-center">
+                            <HCaptcha
+                                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"}
+                                onVerify={(token) => setCaptchaToken(token)}
+                                onExpire={() => setCaptchaToken(null)}
+                            />
                         </div>
 
                         <div className="flex items-center gap-4 py-2">
@@ -84,17 +142,40 @@ export default function RegisterPage() {
 
                         <Button
                             variant="primary"
+                            type="submit"
+                            disabled={isLoading}
                             className="w-full py-5 text-sm tracking-[0.3em] flex items-center justify-center gap-3"
                         >
-                            Create Account <UserPlus className="w-4 h-4" />
+                            {isLoading ? "Creating Account..." : <>Create Account <UserPlus className="w-4 h-4" /></>}
                         </Button>
                     </form>
 
-                    <div className="text-center pt-6">
+                    <div className="text-center pt-6 space-y-8">
                         <p className="text-xs text-neutral-gray font-light">
                             Already have an account?
                             <Link href="/login" className="text-primary-gold font-bold ml-2 hover:underline uppercase tracking-widest">Sign In</Link>
                         </p>
+
+                        <div className="relative flex items-center py-4">
+                            <div className="flex-grow border-t border-neutral-sand"></div>
+                            <span className="flex-shrink mx-4 text-[10px] uppercase tracking-widest text-neutral-gray/50 font-bold">Or Continue With</span>
+                            <div className="flex-grow border-t border-neutral-sand"></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={() => handleSocialLogin('google')}
+                                className="flex items-center justify-center gap-2 py-3 border border-neutral-sand hover:bg-neutral-sand/20 transition-colors text-[10px] font-bold uppercase tracking-widest"
+                            >
+                                Google
+                            </button>
+                            <button
+                                onClick={() => handleSocialLogin('apple')}
+                                className="flex items-center justify-center gap-2 py-3 border border-neutral-sand hover:bg-neutral-sand/20 transition-colors text-[10px] font-bold uppercase tracking-widest"
+                            >
+                                Apple
+                            </button>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -103,3 +184,4 @@ export default function RegisterPage() {
         </div>
     );
 }
+

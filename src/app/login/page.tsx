@@ -5,8 +5,44 @@ import Footer from "@/components/layout/Footer";
 import Button from "@/components/common/Button";
 import Link from "next/link";
 import { Mail, Lock, LogIn } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { useState } from "react";
 
 export default function LoginPage() {
+    const [formData, setFormData] = useState({ email: "", password: "" });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+    const { login, signInWithOAuth } = useAuth();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!captchaToken) {
+            setError("Please verify you are human.");
+            return;
+        }
+        setIsLoading(true);
+        try {
+            await login(formData.email, formData.password, captchaToken);
+            window.location.href = "/account";
+        } catch (err: any) {
+            setError(err.message || "Failed to sign in");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSocialLogin = async (provider: 'google' | 'apple') => {
+        setError(null);
+        try {
+            await signInWithOAuth(provider);
+        } catch (err: any) {
+            setError(err.message || `Failed to sign in with ${provider}`);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-neutral-cream font-body pt-24 text-primary-dark">
             <Navbar />
@@ -19,7 +55,13 @@ export default function LoginPage() {
                         <p className="text-neutral-gray text-sm font-light">Please enter your details to access your account.</p>
                     </div>
 
-                    <form className="space-y-8">
+                    {error && (
+                        <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs text-center font-medium">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-8">
                         <div className="space-y-6">
                             <div className="space-y-2 group">
                                 <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-gray group-focus-within:text-primary-gold transition-colors">Email Address</label>
@@ -28,6 +70,8 @@ export default function LoginPage() {
                                     <input
                                         type="email"
                                         placeholder="your@email.com"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         className="w-full bg-transparent border-b border-neutral-sand py-3 pl-8 text-sm focus:outline-none focus:border-primary-gold transition-all"
                                         required
                                     />
@@ -44,6 +88,8 @@ export default function LoginPage() {
                                     <input
                                         type="password"
                                         placeholder="••••••••"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         className="w-full bg-transparent border-b border-neutral-sand py-3 pl-8 text-sm focus:outline-none focus:border-primary-gold transition-all"
                                         required
                                     />
@@ -51,11 +97,21 @@ export default function LoginPage() {
                             </div>
                         </div>
 
+                        <div className="flex justify-center">
+                            <HCaptcha
+                                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"}
+                                onVerify={(token) => setCaptchaToken(token)}
+                                onExpire={() => setCaptchaToken(null)}
+                            />
+                        </div>
+
                         <Button
                             variant="primary"
+                            type="submit"
+                            disabled={isLoading}
                             className="w-full py-5 text-sm tracking-[0.3em] flex items-center justify-center gap-3"
                         >
-                            Sign In <LogIn className="w-4 h-4" />
+                            {isLoading ? "Signing In..." : <>Sign In <LogIn className="w-4 h-4" /></>}
                         </Button>
                     </form>
 
@@ -72,11 +128,17 @@ export default function LoginPage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <button className="flex items-center justify-center gap-2 py-3 border border-neutral-sand hover:bg-neutral-sand/20 transition-colors text-[10px] font-bold uppercase tracking-widest">
+                            <button
+                                onClick={() => handleSocialLogin('google')}
+                                className="flex items-center justify-center gap-2 py-3 border border-neutral-sand hover:bg-neutral-sand/20 transition-colors text-[10px] font-bold uppercase tracking-widest"
+                            >
                                 Google
                             </button>
-                            <button className="flex items-center justify-center gap-2 py-3 border border-neutral-sand hover:bg-neutral-sand/20 transition-colors text-[10px] font-bold uppercase tracking-widest">
-                                Facebook
+                            <button
+                                onClick={() => handleSocialLogin('apple')}
+                                className="flex items-center justify-center gap-2 py-3 border border-neutral-sand hover:bg-neutral-sand/20 transition-colors text-[10px] font-bold uppercase tracking-widest"
+                            >
+                                Apple
                             </button>
                         </div>
                     </div>
@@ -87,3 +149,4 @@ export default function LoginPage() {
         </div>
     );
 }
+

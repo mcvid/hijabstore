@@ -18,8 +18,8 @@ import {
     Menu,
     X,
 } from "lucide-react";
-import { profileService, Profile } from "@/lib/profileService";
-import { supabase } from "@/lib/supabase";
+import { profileService } from "@/lib/profileService";
+import { useAuth } from "@/context/AuthContext";
 
 interface ProfileLayoutProps {
     children: React.ReactNode;
@@ -48,28 +48,9 @@ const getTierColor = (tier: string) => {
 
 export default function ProfileLayout({ children }: ProfileLayoutProps) {
     const pathname = usePathname();
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { user, isLoading, logout, refreshProfile } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-
-    useEffect(() => {
-        loadProfile();
-        // Safety timeout to prevent infinite loading
-        const timer = setTimeout(() => setIsLoading(false), 10000);
-        return () => clearTimeout(timer);
-    }, []);
-
-    const loadProfile = async () => {
-        try {
-            const data = await profileService.getProfile();
-            setProfile(data);
-        } catch (error) {
-            console.error("Failed to load profile:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -78,7 +59,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
         setIsUploadingPhoto(true);
         try {
             await profileService.uploadProfilePhoto(file);
-            await loadProfile();
+            await refreshProfile();
         } catch (error) {
             console.error("Failed to upload photo:", error);
         } finally {
@@ -87,7 +68,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        await logout();
         window.location.href = "/";
     };
 
@@ -106,21 +87,21 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="relative w-10 h-10 rounded-full bg-neutral-sand overflow-hidden">
-                            {profile?.profile_photo_url ? (
+                            {user?.avatar ? (
                                 <img
-                                    src={profile.profile_photo_url}
-                                    alt={profile.display_name || "Profile"}
+                                    src={user.avatar}
+                                    alt={user.displayName || "Profile"}
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center font-bold text-primary-dark">
-                                    {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+                                    {(user?.firstName?.[0] || "") + (user?.lastName?.[0] || "")}
                                 </div>
                             )}
                         </div>
                         <div>
-                            <p className="font-medium text-primary-dark">{profile?.display_name || `${profile?.first_name} ${profile?.last_name}`}</p>
-                            <p className="text-xs text-neutral-gray capitalize">{profile?.tier} Member</p>
+                            <p className="font-medium text-primary-dark">{user?.displayName || `${user?.firstName} ${user?.lastName}`}</p>
+                            <p className="text-xs text-neutral-gray capitalize">{user?.tier || 'Bronze'} Member</p>
                         </div>
                     </div>
                     <button
@@ -177,15 +158,15 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                         <div className="text-center pb-6 border-b border-neutral-sand">
                             <div className="relative w-24 h-24 mx-auto mb-4">
                                 <div className="w-full h-full rounded-full bg-neutral-sand overflow-hidden">
-                                    {profile?.profile_photo_url ? (
+                                    {user?.avatar ? (
                                         <img
-                                            src={profile.profile_photo_url}
-                                            alt={profile.display_name || "Profile"}
+                                            src={user.avatar}
+                                            alt={user.displayName || "Profile"}
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center font-bold text-2xl text-primary-dark">
-                                            {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+                                            {(user?.firstName?.[0] || "") + (user?.lastName?.[0] || "")}
                                         </div>
                                     )}
                                 </div>
@@ -207,15 +188,15 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                             </div>
 
                             <h2 className="font-display text-xl font-semibold text-primary-dark mb-2">
-                                {profile?.display_name || `${profile?.first_name} ${profile?.last_name}`}
+                                {user?.displayName || `${user?.firstName} ${user?.lastName}`}
                             </h2>
 
-                            <div className={`inline-block px-4 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] mb-3 ${getTierColor(profile?.tier || 'bronze')}`}>
-                                {profile?.tier} Member
+                            <div className={`inline-block px-4 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.2em] mb-3 ${getTierColor(user?.tier || 'bronze')}`}>
+                                {user?.tier || 'Bronze'} Member
                             </div>
 
                             <p className="text-[11px] uppercase tracking-widest text-neutral-gray font-medium">
-                                {profile?.points?.toLocaleString() || 0} Points Collected
+                                {user?.points?.toLocaleString() || 0} Points Collected
                             </p>
                         </div>
 
@@ -273,7 +254,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                         const isActive = pathname === item.href;
                         return (
                             <Link
-                                key={item.href}
+                                key={item.label}
                                 href={item.href}
                                 className={`flex flex-col items-center gap-1 px-3 py-2 transition-colors ${isActive ? "text-[#d4af37]" : "text-neutral-gray hover:text-primary-dark"
                                     }`}

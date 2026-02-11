@@ -28,6 +28,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
         email: "",
         password: "",
         confirmPassword: "",
+        subscribeNewsletter: true,
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -133,6 +134,7 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
                         first_name: formData.firstName,
                         last_name: formData.lastName,
                         display_name: `${formData.firstName} ${formData.lastName.charAt(0)}.`,
+                        newsletter_subscribed: formData.subscribeNewsletter,
                     })
                     .eq("id", data.user.id);
 
@@ -337,24 +339,38 @@ export default function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormPro
             </div>
 
             {/* Terms & Conditions */}
-            <div className="flex items-start gap-3">
-                <input
-                    type="checkbox"
-                    id="terms"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-primary-gold border-neutral-sand rounded focus:ring-primary-gold"
-                />
-                <label htmlFor="terms" className="text-sm text-neutral-gray">
-                    I agree to the{" "}
-                    <a href="/terms" className="text-primary-gold hover:underline">
-                        Terms & Conditions
-                    </a>{" "}
-                    and{" "}
-                    <a href="/privacy" className="text-primary-gold hover:underline">
-                        Privacy Policy
-                    </a>
-                </label>
+            <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        id="newsletter"
+                        checked={formData.subscribeNewsletter}
+                        onChange={(e) => setFormData({ ...formData, subscribeNewsletter: e.target.checked })}
+                        className="mt-1 w-4 h-4 text-primary-gold border-neutral-sand rounded focus:ring-primary-gold"
+                    />
+                    <label htmlFor="newsletter" className="text-sm text-neutral-gray">
+                        Stay updated with our latest collections and exclusive offers.
+                    </label>
+                </div>
+                <div className="flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        className="mt-1 w-4 h-4 text-primary-gold border-neutral-sand rounded focus:ring-primary-gold"
+                    />
+                    <label htmlFor="terms" className="text-sm text-neutral-gray">
+                        I agree to the{" "}
+                        <a href="/terms" className="text-primary-gold hover:underline">
+                            Terms & Conditions
+                        </a>{" "}
+                        and{" "}
+                        <a href="/privacy" className="text-primary-gold hover:underline">
+                            Privacy Policy
+                        </a>
+                    </label>
+                </div>
             </div>
 
             {/* Error Message */}

@@ -3,22 +3,19 @@ import React, { useEffect, useState } from "react";
 import { Plus, MapPin, Edit2, Trash2, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileLayout from "@/components/profile/ProfileLayout";
-import { profileService, Address } from "@/lib/profileService";
+import { profileService } from "@/lib/profileService";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AddressesPage() {
-    const [addresses, setAddresses] = useState<Address[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { user, isLoading: isAuthLoading, refreshProfile } = useAuth();
+    const [isLoading, setIsLoading] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
 
-    useEffect(() => {
-        loadAddresses();
-    }, []);
-
     const loadAddresses = async () => {
+        setIsLoading(true);
         try {
-            const data = await profileService.getAddresses();
-            setAddresses(data);
+            await refreshProfile();
         } catch (error) {
             console.error("Failed to load addresses:", error);
         } finally {
@@ -32,7 +29,7 @@ export default function AddressesPage() {
         setDeletingId(addressId);
         try {
             await profileService.deleteAddress(addressId);
-            setAddresses(addresses.filter((addr) => addr.id !== addressId));
+            await refreshProfile();
         } catch (error) {
             console.error("Failed to delete address:", error);
         } finally {
@@ -49,7 +46,7 @@ export default function AddressesPage() {
         }
     };
 
-    if (isLoading) {
+    if (isAuthLoading || (isLoading && !user?.addresses.length)) {
         return (
             <ProfileLayout>
                 <div className="flex items-center justify-center h-96">
@@ -58,6 +55,8 @@ export default function AddressesPage() {
             </ProfileLayout>
         );
     }
+
+    const addresses = user?.addresses || [];
 
     return (
         <ProfileLayout>
@@ -92,7 +91,7 @@ export default function AddressesPage() {
                                     className="bg-white rounded-2xl border border-neutral-sand p-8 relative hover:border-[#d4af37]/30 transition-all group"
                                 >
                                     {/* Default Badge */}
-                                    {address.is_default && (
+                                    {address.isDefault && (
                                         <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1 bg-[#d4af37]/10 text-[#d4af37] rounded-full text-[10px] font-bold uppercase tracking-widest">
                                             <CheckCircle size={12} strokeWidth={2.5} />
                                             Primary
@@ -105,18 +104,18 @@ export default function AddressesPage() {
                                             <MapPin className="text-primary-dark" size={18} strokeWidth={1.5} />
                                         </div>
                                         <span className="text-sm font-bold text-primary-dark uppercase tracking-widest">
-                                            {address.label || address.address_type}
+                                            {address.type}
                                         </span>
                                     </div>
 
                                     {/* Address Details */}
                                     <div className="text-sm text-neutral-gray space-y-1.5 mb-8">
-                                        <p className="font-display text-lg text-primary-dark mb-2">{address.recipient_name}</p>
-                                        <p className="font-medium leading-relaxed">{address.address_line_1}</p>
-                                        {address.address_line_2 && <p className="font-medium leading-relaxed">{address.address_line_2}</p>}
+                                        <p className="font-display text-lg text-primary-dark mb-2">{address.firstName} {address.lastName}</p>
+                                        <p className="font-medium leading-relaxed">{address.street}</p>
+                                        {address.apartment && <p className="font-medium leading-relaxed">{address.apartment}</p>}
                                         <p className="font-medium leading-relaxed">
                                             {address.city}
-                                            {address.state_province && `, ${address.state_province}`} {address.postal_code}
+                                            {address.state && `, ${address.state}`} {address.zipCode}
                                         </p>
                                         <p className="font-medium leading-relaxed">{address.country}</p>
 
@@ -124,10 +123,10 @@ export default function AddressesPage() {
                                             {address.phone && (
                                                 <p className="text-[11px] uppercase tracking-wider text-neutral-gray/70">Contact: <span className="text-primary-dark font-semibold">{address.phone}</span></p>
                                             )}
-                                            {address.delivery_instructions && (
+                                            {address.deliveryInstructions && (
                                                 <div className="mt-2 p-3 bg-neutral-cream/30 border border-neutral-sand/30 rounded-lg">
                                                     <p className="text-[10px] uppercase tracking-widest font-bold text-neutral-gray mb-1">Inquiry/Note</p>
-                                                    <p className="text-xs italic leading-relaxed">{address.delivery_instructions}</p>
+                                                    <p className="text-xs italic leading-relaxed">{address.deliveryInstructions}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -135,9 +134,9 @@ export default function AddressesPage() {
 
                                     {/* Actions */}
                                     <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        {!address.is_default && (
+                                        {!address.isDefault && (
                                             <button
-                                                onClick={() => handleSetDefault(address.id, address.address_type)}
+                                                onClick={() => handleSetDefault(address.id, address.type)}
                                                 className="flex-1 py-2.5 bg-neutral-cream text-primary-dark rounded-xl hover:bg-[#d4af37]/10 transition-colors text-[10px] font-bold uppercase tracking-widest"
                                             >
                                                 Set Primary

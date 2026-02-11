@@ -27,6 +27,12 @@ export default function Navbar() {
     const { user, isAuthenticated, logout } = useAuth();
 
     useEffect(() => {
+        const handleOpenAuthModal = () => setAuthModalOpen(true);
+        window.addEventListener('open-auth-modal', handleOpenAuthModal);
+        return () => window.removeEventListener('open-auth-modal', handleOpenAuthModal);
+    }, []);
+
+    useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const data = await adminService.getStructuredCategories();
@@ -51,8 +57,8 @@ export default function Navbar() {
                     }))
                 }));
                 setCategories(mappedCategories);
-            } catch (error) {
-                console.error("Failed to fetch categories:", error);
+            } catch (error: any) {
+                console.error("Failed to fetch categories:", error?.message || error || JSON.stringify(error));
             }
         };
         fetchCategories();
@@ -205,7 +211,17 @@ export default function Navbar() {
                     </button>
 
                     {/* Icons */}
-                    <div className="flex items-center gap-6 text-primary-dark z-50">
+                    <div className="flex items-center gap-4 md:gap-6 text-primary-dark z-50">
+                        {/* Mobile Account Button */}
+                        <button onClick={handleAccountClick} className="lg:hidden hover:text-primary-gold transition-colors relative group">
+                            {isAuthenticated && user ? (
+                                <div className="w-6 h-6 rounded-full bg-primary-gold flex items-center justify-center text-[10px] text-white font-bold border-2 border-transparent group-hover:border-primary-dark transition-all">
+                                    {user.firstName?.[0] || user.email?.[0] || 'U'}
+                                </div>
+                            ) : (
+                                <User className="w-5 h-5" />
+                            )}
+                        </button>
                         {/* Search Bar */}
                         <div className="relative hidden md:flex items-center">
                             <AnimatePresence>

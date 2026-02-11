@@ -29,8 +29,8 @@ export default function Home() {
         ]);
         setProducts(prodData);
         setCategories(catData);
-      } catch (error) {
-        console.error("Failed to fetch home data:", error);
+      } catch (error: any) {
+        console.error("Failed to fetch home data:", error?.message || error || JSON.stringify(error));
       } finally {
         setIsLoading(false);
       }

@@ -44,11 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Fetch wishlist (IDs only)
             const { data: wishlist, error: wishError } = await supabase
-                .from('wishlists')
+                .from('wishlist_items')
                 .select('product_id')
                 .eq('user_id', userId);
 
-            if (wishError) throw wishError;
+            if (wishError) {
+                console.error("Error fetching wishlist items:", wishError);
+                // Non-critical, continue without wishlist if it fails
+            }
 
             // Map to App User type
             const userData: User = {
@@ -56,40 +59,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: email,
                 firstName: profile.first_name || '',
                 lastName: profile.last_name || '',
-                phone: profile.phone,
-                avatar: profile.avatar_url,
+                displayName: profile.display_name || `${profile.first_name} ${profile.last_name}`,
+                phone: profile.phone || '',
+                avatar: profile.avatar_url || profile.profile_photo_url || '',
+                dateOfBirth: profile.date_of_birth,
+                gender: profile.gender,
                 memberSince: new Date(profile.created_at).toLocaleDateString(),
                 tier: profile.tier || 'bronze',
                 points: profile.points || 0,
+                lifetimeSpent: profile.lifetime_spent || 0,
+                totalOrders: profile.total_orders || 0,
                 addresses: (addresses || []).map((addr: any) => ({
                     id: addr.id,
-                    type: addr.type,
+                    type: addr.address_type === 'shipping' ? 'Home' : addr.address_type === 'billing' ? 'Work' : 'Other',
                     isDefault: addr.is_default,
-                    firstName: addr.first_name,
-                    lastName: addr.last_name,
-                    street: addr.street,
-                    apartment: addr.apartment,
+                    firstName: addr.recipient_name?.split(' ')[0] || '',
+                    lastName: addr.recipient_name?.split(' ').slice(1).join(' ') || '',
+                    street: addr.address_line_1,
+                    apartment: addr.address_line_2,
                     city: addr.city,
-                    state: addr.state,
-                    zipCode: addr.zip_code,
+                    state: addr.state_province || '',
+                    zipCode: addr.postal_code,
                     country: addr.country,
-                    phone: addr.phone
+                    phone: addr.phone,
+                    deliveryInstructions: addr.delivery_instructions
                 })),
-                paymentMethods: [], // Handle later
+                paymentMethods: [],
                 preferences: {
-                    newsletter: true,
-                    smsNotifications: false,
+                    newsletter: profile.newsletter_subscribed ?? true,
+                    smsNotifications: profile.sms_notifications ?? false,
                     culturalMode: 'Standard',
-                    currency: 'USD',
-                    language: 'en'
+                    currency: profile.currency || 'USD',
+                    language: profile.language || 'en'
                 },
                 wishlist: (wishlist || []).map((w: any) => w.product_id),
-                orderHistory: [] // To be fetched separately or joined
+                orderHistory: []
             };
 
             setUser(userData);
-        } catch (error) {
-            console.error("Error fetching user profile:", error);
+        } catch (error: unknown) {
+            const err = error as any;
+            console.error("Error fetching user profile:", {
+                message: err.message,
+                details: err.details,
+                hint: err.hint,
+                code: err.code,
+                error: err
+            });
             // Fallback: If profile doesn't exist yet but user is authenticated
             // This can happen briefly during signup or if DB sync failed
         }
@@ -133,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithOAuth({
             provider,
             options: {
-                redirectTo: `${window.location.host === 'localhost:3000' ? 'http://localhost:3000' : 'https://' + window.location.host}/account`,
+                redirectTo: `${window.location.origin}/api/auth/callback`,
             }
         });
         if (error) throw error;
@@ -217,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isWhishlisted) {
             // Remove from DB
             const { error } = await supabase
-                .from('wishlists')
+                .from('wishlist_items')
                 .delete()
                 .eq('user_id', user.id)
                 .eq('product_id', productId);
@@ -225,7 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
             // Add to DB
             const { error } = await supabase
-                .from('wishlists')
+                .from('wishlist_items')
                 .insert({ user_id: user.id, product_id: productId });
             if (error) throw error;
         }

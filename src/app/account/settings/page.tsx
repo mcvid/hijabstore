@@ -1,19 +1,20 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Camera, User, Mail, Phone, Calendar, Save, CheckCircle } from "lucide-react";
 import ProfileLayout from "@/components/profile/ProfileLayout";
-import { profileService, Profile } from "@/lib/profileService";
+import { profileService } from "@/lib/profileService";
+import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-
-import HCaptcha from '@hcaptcha/react-hcaptcha';
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SettingsPage() {
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { user, refreshProfile, updateUser } = useAuth();
+    const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+    const hcaptchaRef = useRef<HCaptcha>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
-    // ... formData state ...
     const [formData, setFormData] = useState({
         first_name: "",
         last_name: "",
@@ -21,76 +22,90 @@ export default function SettingsPage() {
         email: "",
         phone: "",
         date_of_birth: "",
-        gender: "",
+        gender: "prefer_not_to_say", // Changed default to match button value
         language: "en",
         currency: "USD",
     });
 
     useEffect(() => {
-        loadProfile();
-    }, []);
+        if (user) {
+            setFormData({
+                first_name: user.firstName || "",
+                last_name: user.lastName || "",
+                display_name: user.displayName || "",
+                email: user.email || "",
+                phone: user.phone || "",
+                date_of_birth: user.dateOfBirth || "",
+                gender: user.gender || "prefer_not_to_say", // Changed default to match button value
+                language: user.preferences?.language || "en",
+                currency: user.preferences?.currency || "USD",
+            });
+        }
+    }, [user]);
 
-    const loadProfile = async () => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
         try {
-            const data = await profileService.getProfile();
-            if (data) {
-                setProfile(data);
-                setFormData({
-                    first_name: data.first_name || "",
-                    last_name: data.last_name || "",
-                    display_name: data.display_name || "",
-                    email: data.email || "",
-                    phone: data.phone || "",
-                    date_of_birth: data.date_of_birth || "",
-                    gender: data.gender || "",
-                    language: data.language || "en",
-                    currency: data.currency || "USD",
-                });
+            const url = await profileService.uploadProfilePhoto(file);
+            if (url) {
+                await refreshProfile();
+                alert("Profile photo updated");
             }
         } catch (error) {
-            console.error("Failed to load profile:", error);
+            console.error("Failed to upload photo:", error);
+            alert("Failed to upload photo");
         } finally {
-            setIsLoading(false);
+            setIsUploading(false);
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!captchaToken) {
-            alert("Please complete the captcha.");
+            alert("Please complete the CAPTCHA");
             return;
         }
 
         setIsSaving(true);
-
         try {
-            // Get current session token for Authorization header
-            const { data: { session: authSession } } = await supabase.auth.getSession();
-
-            const res = await fetch("/api/account/update-profile", {
+            const response = await fetch("/api/account/update-profile", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${authSession?.access_token || ''}`
+                    "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ""}`,
                 },
                 body: JSON.stringify({
-                    updates: formData,
-                    captchaToken
+                    captchaToken,
+                    updates: {
+                        first_name: formData.first_name,
+                        last_name: formData.last_name,
+                        display_name: formData.display_name,
+                        phone: formData.phone,
+                        date_of_birth: formData.date_of_birth,
+                        gender: formData.gender,
+                        language: formData.language,
+                        currency: formData.currency,
+                    },
                 }),
             });
 
-            const data = await res.json();
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Update failed");
+            }
 
-            if (data.error) throw new Error(data.error);
-
-            alert("Profile updated successfully!");
+            await refreshProfile();
+            alert("Profile updated successfully");
+            hcaptchaRef.current?.resetCaptcha();
+            setCaptchaToken(null);
         } catch (error: any) {
             console.error("Failed to update profile:", error);
-            alert(`Failed to update profile: ${error.message}`);
+            alert(error.message || "Failed to update profile");
         } finally {
             setIsSaving(false);
-            setCaptchaToken(null); // Reset captcha after submission
         }
     };
 
@@ -126,21 +141,31 @@ export default function SettingsPage() {
                         <div className="flex flex-col md:flex-row items-center gap-8">
                             <div className="relative group">
                                 <div className="w-28 h-28 rounded-full bg-neutral-cream border-2 border-[#d4af37]/20 overflow-hidden shadow-inner group-hover:border-[#d4af37]/40 transition-colors">
-                                    {profile?.profile_photo_url ? (
+                                    {user?.avatar ? (
                                         <img
-                                            src={profile.profile_photo_url}
+                                            src={user.avatar}
                                             alt="Profile"
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center font-display text-3xl text-primary-dark">
-                                            {formData.first_name?.[0]}{formData.last_name?.[0]}
+                                            {(user?.firstName?.[0] || "") + (user?.lastName?.[0] || "")}
                                         </div>
                                     )}
                                 </div>
                                 <label className="absolute bottom-1 right-1 w-8 h-8 bg-primary-dark text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-[#d4af37] transition-all shadow-lg scale-90 group-hover:scale-100">
-                                    <Camera size={14} strokeWidth={2.5} />
-                                    <input type="file" accept="image/*" className="hidden" />
+                                    {isUploading ? (
+                                        <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full" />
+                                    ) : (
+                                        <Camera size={14} strokeWidth={2.5} />
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        disabled={isUploading}
+                                        className="hidden"
+                                    />
                                 </label>
                             </div>
                             <div className="text-center md:text-left">

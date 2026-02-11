@@ -11,6 +11,7 @@ export interface Address {
     zipCode: string;
     country: string;
     phone: string;
+    deliveryInstructions?: string | null;
 }
 
 export interface CreditCard {
@@ -35,11 +36,16 @@ export interface User {
     email: string;
     firstName: string;
     lastName: string;
+    displayName?: string;
     phone?: string;
     avatar?: string;
+    dateOfBirth?: string | null;
+    gender?: string | null;
     memberSince: string;
-    tier: 'Blue' | 'Gold' | 'Platinum' | 'VIP';
+    tier: 'bronze' | 'silver' | 'gold' | 'platinum';
     points: number;
+    lifetimeSpent: number;
+    totalOrders: number;
     addresses: Address[];
     paymentMethods: CreditCard[];
     preferences: UserPreferences;
@@ -52,10 +58,13 @@ export const MOCK_USER: User = {
     email: "sarah.ahmed@example.com",
     firstName: "Sarah",
     lastName: "Ahmed",
+    displayName: "Sarah A.",
     phone: "+971 50 123 4567",
     memberSince: "Jan 15, 2025",
-    tier: "Gold",
+    tier: "gold",
     points: 2450,
+    lifetimeSpent: 5500,
+    totalOrders: 12,
     addresses: [
         {
             id: "addr_1",

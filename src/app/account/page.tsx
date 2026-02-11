@@ -15,35 +15,30 @@ import {
     Settings,
 } from "lucide-react";
 import ProfileLayout from "@/components/profile/ProfileLayout";
-import { profileService, Profile } from "@/lib/profileService";
+import { profileService } from "@/lib/profileService";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AccountDashboard() {
-    const [profile, setProfile] = useState<Profile | null>(null);
+    const { user, isLoading: isAuthLoading } = useAuth();
     const [orders, setOrders] = useState<any[]>([]);
-    const [wishlistCount, setWishlistCount] = useState(0);
     const [tierProgress, setTierProgress] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadDashboardData();
-    }, []);
+        if (user) {
+            loadDashboardData();
+        }
+    }, [user]);
 
     const loadDashboardData = async () => {
         try {
-            const [profileData, ordersData, wishlistData] = await Promise.all([
-                profileService.getProfile(),
-                profileService.getOrders(3), // Last 3 orders
-                profileService.getWishlist(),
-            ]);
-
-            setProfile(profileData);
+            const ordersData = await profileService.getOrders(3); // Last 3 orders
             setOrders(ordersData);
-            setWishlistCount(wishlistData.length);
 
-            if (profileData) {
+            if (user) {
                 const progress = profileService.calculateTierProgress(
-                    profileData.lifetime_spent,
-                    profileData.tier
+                    user.lifetimeSpent || 0,
+                    user.tier || 'bronze'
                 );
                 setTierProgress(progress);
             }
@@ -61,7 +56,7 @@ export default function AccountDashboard() {
         return "Good Evening";
     };
 
-    if (isLoading) {
+    if (isAuthLoading || (isLoading && !orders.length)) {
         return (
             <ProfileLayout>
                 <div className="flex items-center justify-center h-96">
@@ -81,7 +76,7 @@ export default function AccountDashboard() {
 
                     <div className="relative z-10">
                         <h1 className="font-display text-3xl mb-2">
-                            {getGreeting()}, {profile?.first_name}! <Sparkles className="inline-block ml-2" size={28} />
+                            {getGreeting()}, {user?.firstName}! <Sparkles className="inline-block ml-2" size={28} />
                         </h1>
                         <p className="text-white/80">
                             Welcome back to your personal boutique experience
@@ -99,7 +94,7 @@ export default function AccountDashboard() {
                             <span className="text-[10px] uppercase tracking-widest text-neutral-gray font-medium">All Time</span>
                         </div>
                         <p className="font-display text-3xl text-primary-dark mb-1">
-                            {profile?.total_orders || 0}
+                            {user?.totalOrders || 0}
                         </p>
                         <p className="text-xs uppercase tracking-wider text-neutral-gray">Total Orders</p>
                     </div>
@@ -112,7 +107,7 @@ export default function AccountDashboard() {
                             <span className="text-[10px] uppercase tracking-widest text-neutral-gray font-medium">Lifetime</span>
                         </div>
                         <p className="font-display text-3xl text-primary-dark mb-1">
-                            ${profile?.lifetime_spent?.toLocaleString() || '0'}
+                            ${user?.lifetimeSpent?.toLocaleString() || '0'}
                         </p>
                         <p className="text-xs uppercase tracking-wider text-neutral-gray">Total Spent</p>
                     </div>
@@ -130,7 +125,7 @@ export default function AccountDashboard() {
                             </Link>
                         </div>
                         <p className="font-display text-3xl text-primary-dark mb-1">
-                            {wishlistCount}
+                            {user?.wishlist?.length || 0}
                         </p>
                         <p className="text-xs uppercase tracking-wider text-neutral-gray">Wishlist Items</p>
                     </div>
@@ -153,7 +148,7 @@ export default function AccountDashboard() {
                             </div>
                             <div className="text-right">
                                 <p className="text-2xl font-bold text-amber-700">
-                                    {profile?.points?.toLocaleString()}
+                                    {user?.points?.toLocaleString()}
                                 </p>
                                 <p className="text-xs text-neutral-gray">Points</p>
                             </div>

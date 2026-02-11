@@ -16,7 +16,7 @@ export interface Profile {
     phone: string | null;
     date_of_birth: string | null;
     gender: string | null;
-    profile_photo_url: string | null;
+    avatar_url: string | null;
     account_status: string;
     email_verified: boolean;
     phone_verified: boolean;
@@ -183,21 +183,21 @@ class ProfileService {
             if (!uid) throw new Error("Not authenticated");
 
             const fileExt = file.name.split(".").pop();
-            const fileName = `${uid}-${Date.now()}.${fileExt}`;
-            const filePath = `avatars/${fileName}`;
+            const fileName = `${uid}/${Date.now()}.${fileExt}`;
+            const filePath = fileName;
 
             const { error: uploadError } = await supabase.storage
-                .from("profile-photos")
+                .from("avatars")
                 .upload(filePath, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
             const { data } = supabase.storage
-                .from("profile-photos")
+                .from("avatars")
                 .getPublicUrl(filePath);
 
             // Update profile with new photo URL
-            await this.updateProfile({ profile_photo_url: data.publicUrl });
+            await this.updateProfile({ avatar_url: data.publicUrl });
 
             return data.publicUrl;
         } catch (error) {
@@ -333,8 +333,8 @@ class ProfileService {
 
             if (error) throw error;
             return data || [];
-        } catch (error) {
-            console.error("Error fetching wishlist:", error);
+        } catch (error: any) {
+            console.error("Error fetching wishlist:", error?.message || error || JSON.stringify(error));
             return [];
         }
     }
@@ -535,7 +535,7 @@ class ProfileService {
             *,
             product:products(name, slug, images:product_images(url, is_primary))
           ),
-          address:order_addresses(*)
+          address:addresses!shipping_address_id(*)
         `)
                 .eq("user_id", uid)
                 .order("created_at", { ascending: false })
@@ -543,8 +543,8 @@ class ProfileService {
 
             if (error) throw error;
             return data || [];
-        } catch (error) {
-            console.error("Error fetching orders:", error);
+        } catch (error: any) {
+            console.error("Error fetching orders:", error?.message || error || JSON.stringify(error));
             return [];
         }
     }

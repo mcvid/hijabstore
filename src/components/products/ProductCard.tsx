@@ -43,7 +43,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                         if (isAuthenticated) {
                             toggleWishlist(product.id);
                         } else {
-                            // Ideally trigger auth modal, but for now just prevent default
+                            // Dispatch custom event to open auth modal (handled in Navbar or globally)
+                            window.dispatchEvent(new CustomEvent('open-auth-modal'));
                         }
                     }}
                     className="absolute top-4 right-4 z-20 w-8 h-8 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full text-primary-dark hover:bg-white hover:text-primary-gold transition-all duration-300 transform translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
