@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, Mail, Lock, User, Github } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -13,6 +14,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
+    const router = useRouter();
     const [mode, setMode] = useState<"login" | "signup">(initialMode);
     const { login, signup, signInWithOAuth, isLoading } = useAuth();
 
@@ -41,6 +43,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
                 const firstName = nameParts[0] || "User";
                 const lastName = nameParts.slice(1).join(" ") || "";
                 await signup(email, password, firstName, lastName, captchaToken);
+                router.push("/account/settings");
             }
             onClose();
         } catch (err: any) {
@@ -86,7 +89,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
                         transition={{ type: "spring", duration: 0.5 }}
                         className="fixed inset-0 flex items-center justify-center z-[80] pointer-events-none p-4"
                     >
-                        <div className="bg-white pointer-events-auto w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[600px] max-h-[90vh]">
+                        <div className="bg-white pointer-events-auto w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[500px] md:min-h-[600px] max-h-[90vh]">
 
                             {/* Visual Side (Left/Right based on mode? keeping simple for now) */}
                             <div className="hidden md:block w-1/2 relative overflow-hidden bg-[#0f1419]">
@@ -111,7 +114,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
                             </div>
 
                             {/* Form Side */}
-                            <div className="w-full md:w-1/2 p-8 md:p-12 relative flex flex-col justify-center bg-white overflow-y-auto">
+                            <div className="w-full md:w-1/2 px-6 py-10 md:p-12 relative flex flex-col justify-center bg-white overflow-y-auto">
                                 <button
                                     onClick={onClose}
                                     className="absolute top-6 right-6 p-2 text-neutral-400 hover:text-[#0f1419] transition-colors rounded-full hover:bg-neutral-100"
@@ -190,14 +193,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
                                         </div>
                                     </div>
 
-                                    {/* hCaptcha Widget */}
-                                    <div className="flex justify-center py-2">
-                                        <HCaptcha
-                                            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"}
-                                            onVerify={(token) => setCaptchaToken(token)}
-                                            onExpire={() => setCaptchaToken(null)}
-                                            ref={captchaRef}
-                                        />
+                                    {/* hCaptcha Widget - Managed scale for smaller mobile screens */}
+                                    <div className="flex justify-center py-4 w-full overflow-hidden">
+                                        <div className="scale-[0.85] origin-center sm:scale-100 min-h-[78px]">
+                                            <HCaptcha
+                                                sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"}
+                                                onVerify={(token) => setCaptchaToken(token)}
+                                                onExpire={() => setCaptchaToken(null)}
+                                                ref={captchaRef}
+                                            />
+                                        </div>
                                     </div>
 
                                     <button

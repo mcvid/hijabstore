@@ -10,8 +10,10 @@ import MobileMenu from "@/components/layout/MobileMenu";
 import SearchResults from "@/components/layout/SearchResults";
 import { adminService } from "@/lib/admin";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+    const router = useRouter();
     const [scrolled, setScrolled] = useState(false);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -86,7 +88,7 @@ export default function Navbar() {
 
     const handleAccountClick = () => {
         if (isAuthenticated) {
-            window.location.href = "/account";
+            router.push("/account");
         } else {
             setAuthModalOpen(true);
         }
@@ -118,6 +120,8 @@ export default function Navbar() {
                 categories={categories}
                 isOpen={mobileMenuOpen}
                 onClose={() => setMobileMenuOpen(false)}
+                isAuthenticated={isAuthenticated}
+                onAccountClick={handleAccountClick}
             />
 
             <nav
@@ -128,7 +132,7 @@ export default function Navbar() {
                 onMouseLeave={() => setActiveCategory(null)}
             >
                 <div className="container mx-auto px-4 flex justify-between items-center">
-                    <Link href="/" className="font-accent text-2xl xs:text-3xl font-bold tracking-tight xs:tracking-wider text-primary-dark cursor-pointer z-50 whitespace-nowrap">
+                    <Link href="/" className="font-accent text-2xl sm:text-3xl font-bold tracking-tight sm:tracking-wider text-primary-dark cursor-pointer z-50 whitespace-nowrap">
                         Yasmin <span className="text-primary-gold font-accent">Fashions</span>
                     </Link>
 

@@ -9,9 +9,11 @@ interface MobileMenuProps {
     categories: Category[];
     isOpen: boolean;
     onClose: () => void;
+    isAuthenticated: boolean;
+    onAccountClick: () => void;
 }
 
-export default function MobileMenu({ categories, isOpen, onClose }: MobileMenuProps) {
+export default function MobileMenu({ categories, isOpen, onClose, isAuthenticated, onAccountClick }: MobileMenuProps) {
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
     const toggleCategory = (categoryId: string) => {
@@ -113,10 +115,34 @@ export default function MobileMenu({ categories, isOpen, onClose }: MobileMenuPr
                                 <Link href="/products?category=fragrance" onClick={onClose} className="block font-display text-xl uppercase tracking-wider hover:text-primary-gold transition-colors">
                                     Fragrance
                                 </Link>
-                                <Link href="/account" onClick={onClose} className="flex items-center gap-4 text-neutral-sand hover:text-primary-gold transition-colors py-2">
-                                    <User size={18} />
-                                    Account
-                                </Link>
+                                {isAuthenticated ? (
+                                    <button
+                                        onClick={() => {
+                                            onClose();
+                                            onAccountClick();
+                                        }}
+                                        className="flex items-center gap-4 text-neutral-sand hover:text-primary-gold transition-colors py-2 w-full text-left"
+                                    >
+                                        <User size={18} />
+                                        My Account
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            onClose();
+                                            onAccountClick();
+                                        }}
+                                        className="flex items-center gap-4 bg-primary-gold/10 text-primary-gold border border-primary-gold/20 px-6 py-4 rounded-xl hover:bg-primary-gold/20 transition-all w-full text-left group"
+                                    >
+                                        <div className="bg-primary-gold text-primary-dark p-2 rounded-lg group-hover:scale-110 transition-transform">
+                                            <User size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm tracking-widest">SIGN IN</p>
+                                            <p className="text-[10px] text-primary-gold/60">OR CREATE ACCOUNT</p>
+                                        </div>
+                                    </button>
+                                )}
                                 <Link href="/search" onClick={onClose} className="flex items-center gap-4 text-neutral-sand hover:text-primary-gold transition-colors py-2">
                                     <Search size={18} />
                                     Search

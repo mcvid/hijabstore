@@ -18,9 +18,9 @@ import ProfileLayout from "@/components/profile/ProfileLayout";
 import { profileService } from "@/lib/profileService";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { redirect } from "next/navigation";
 
 export default function AccountDashboard() {
+    const router = useRouter();
     const { user, isLoading: isAuthLoading } = useAuth();
     const [orders, setOrders] = useState<any[]>([]);
     const [tierProgress, setTierProgress] = useState<any>(null);
@@ -28,12 +28,12 @@ export default function AccountDashboard() {
 
     useEffect(() => {
         if (!isAuthLoading && !user) {
-            redirect("/");
+            router.push("/");
         }
         if (user) {
             loadDashboardData();
         }
-    }, [user, isAuthLoading]);
+    }, [user, isAuthLoading, router]);
 
     const loadDashboardData = async () => {
         try {
@@ -61,21 +61,18 @@ export default function AccountDashboard() {
         return "Good Evening";
     };
 
-    if (isAuthLoading || (isLoading && !orders.length)) {
+    if (isAuthLoading || (isLoading && user)) {
         return (
             <ProfileLayout>
                 <div className="flex flex-col items-center justify-center h-96 gap-4">
                     <div className="animate-spin w-8 h-8 border-4 border-primary-gold border-t-transparent rounded-full" />
-                    {!isAuthLoading && !user && (
-                        <p className="text-neutral-gray text-sm animate-pulse">Redirecting to login...</p>
-                    )}
                 </div>
             </ProfileLayout>
         );
     }
 
-    if (!user && !isAuthLoading) {
-        return null; // Handled by redirect
+    if (!user) {
+        return null;
     }
 
     return (

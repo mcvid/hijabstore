@@ -106,8 +106,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 code: err.code,
                 error: err
             });
+
             // Fallback: If profile doesn't exist yet but user is authenticated
             // This can happen briefly during signup or if DB sync failed
+            if (err.code === 'PGRST116') { // Specific code for .single() not finding a row
+                console.log("Profile not found, attempting to create basic profile...");
+                const { error: upsertError } = await supabase
+                    .from('profiles')
+                    .upsert({
+                        id: userId,
+                        email: email,
+                        tier: 'bronze',
+                        points: 0
+                    }, { onConflict: 'id' });
+
+                if (!upsertError) {
+                    // Try to fetch again once
+                    await fetchProfile(userId, email);
+                } else {
+                    console.error("Failed to create fallback profile:", upsertError);
+                }
+            }
         }
     };
 
